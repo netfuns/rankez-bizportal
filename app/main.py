@@ -71,7 +71,8 @@ app.mount(
 async def context_middleware(request: Request, call_next):
     host = (request.headers.get("host", "").split(":", 1)[0] or "").lower()
     allowed = _allowed_hosts()
-    if allowed and host not in allowed:
+    # /healthz 供容器/负载均衡健康检查使用，豁免绑定域名校验
+    if allowed and host not in allowed and request.url.path != "/healthz":
         return HTMLResponse(
             "<h2>403 · Access via this address is not allowed</h2>"
             "<p>Please configure allowed domains in system settings.</p>",
