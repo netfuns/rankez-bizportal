@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}{{ (t('Edit Customer') if customer else t('Add Customer')) }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Edit Customer') if customer else t('Add Customer') }}</h1>
+  <div class="sub">{{ t('Fields marked * are required') }}</div>
+</div>
+
+<div class="card">
+  <form method="post" action="{% if customer %}/admin/customers/{{ customer.id }}/edit{% else %}/admin/customers/new{% endif %}">
+    <div class="row">
+      <div class="field">
+        <label for="assumed_name">{{ t('Assumed Name *') }}</label>
+        <input type="text" id="assumed_name" name="assumed_name" value="{{ customer.assumed_name if customer else '' }}" required>
+      </div>
+      <div class="field">
+        <label for="legal_name">{{ t('Legal Name') }}</label>
+        <input type="text" id="legal_name" name="legal_name" value="{{ customer.legal_name or '' if customer else '' }}">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="domains-input">{{ t('Company Domains * (press Enter to add, multiple allowed)') }}</label>
+      <div class="tag-input" id="domains-input" data-name="domains" data-value="{{ domains|join(',') }}"></div>
+      <div class="help">{{ t('Only users whose email domain matches the entries here can self-register') }}</div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="registration_address">{{ t('Registration Address') }}</label>
+        <input type="text" id="registration_address" name="registration_address" value="{{ customer.registration_address or '' if customer else '' }}">
+      </div>
+      <div class="field">
+        <label for="telephone">{{ t('Telephone') }}</label>
+        <input type="text" id="telephone" name="telephone" value="{{ customer.telephone or '' if customer else '' }}">
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="org_contact_id">{{ t('Organization Contact') }}</label>
+        <select id="org_contact_id" name="org_contact_id">
+          <option value="">{{ t('(Not set)') }}</option>
+          {% for u in contacts %}
+          <option value="{{ u.id }}" {% if customer and customer.org_contact_id == u.id %}selected{% endif %}>
+            {{ u.display_name }}（{{ u.email }}）
+          </option>
+          {% endfor %}
+        </select>
+        <div class="help">{{ t('Candidates are users whose email domain belongs to this company; save the customer and come back after users join') if not contacts else '' }}</div>
+      </div>
+      <div class="field">
+        <label for="tech_contact_id">{{ t('Technical Contact') }}</label>
+        <select id="tech_contact_id" name="tech_contact_id">
+          <option value="">{{ t('(Not set)') }}</option>
+          {% for u in contacts %}
+          <option value="{{ u.id }}" {% if customer and customer.tech_contact_id == u.id %}selected{% endif %}>
+            {{ u.display_name }}（{{ u.email }}）
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="note">{{ t('Note') }}</label>
+      <textarea id="note" name="note" rows="2">{{ customer.note or '' if customer else '' }}</textarea>
+    </div>
+
+    <div class="field">
+      <label class="check">
+        <input type="checkbox" name="is_active" {% if not customer or customer.is_active %}checked{% endif %}> {{ t('Enable this customer') }}
+      </label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Save') }}</button>
+      <a class="btn ghost" href="/admin/customers">{{ t('Back to List') }}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

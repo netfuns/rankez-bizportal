@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Ticket Management') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Ticket Management') }}</h1>
+  <div class="sub">{{ t('Customer verification requests') }}</div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get" action="/admin/tickets">
+    <div class="field">
+      <label for="q">{{ t('Search number / domain') }}</label>
+      <input type="text" id="q" name="q" value="{{ q }}">
+    </div>
+    <div class="field">
+      <label for="assumed">{{ t('Search assumed name') }}</label>
+      <input type="text" id="assumed" name="assumed" value="{{ assumed }}">
+    </div>
+    <div class="field">
+      <label for="ticket_type">{{ t('Type') }}</label>
+      <select id="ticket_type" name="ticket_type">
+        <option value="">{{ t('All') }}</option>
+        {% for tp in types %}
+        <option value="{{ tp }}" {% if ticket_type == tp %}selected{% endif %}>{{ tp }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="status">{{ t('Status') }}</label>
+      <select id="status" name="status">
+        <option value="">{{ t('All') }}</option>
+        <option value="requested" {% if status == 'requested' %}selected{% endif %}>{{ t('Requested') }}</option>
+        <option value="verified" {% if status == 'verified' %}selected{% endif %}>{{ t('Verified') }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="date_from">{{ t('Date from') }}</label>
+      <input type="date" id="date_from" name="date_from" value="{{ date_from }}">
+    </div>
+    <div class="field">
+      <label for="date_to">{{ t('Date to') }}</label>
+      <input type="date" id="date_to" name="date_to" value="{{ date_to }}">
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Filter') }}</button>
+      <a class="btn ghost" href="/admin/tickets">{{ t('Reset') }}</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Ticket No.') }}</th><th>{{ t('Date') }}</th><th>{{ t('Assumed Name') }}</th>
+          <th>{{ t('Company Domains') }}</th><th>{{ t('Type') }}</th><th>{{ t('Status') }}</th>
+          <th>{{ t('Requested by') }}</th><th>{{ t('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for tk in tickets %}
+        <tr>
+          <td class="nowrap mono">{{ tk.number }}</td>
+          <td class="nowrap small">{{ tk.created_at|dt }}</td>
+          <td><strong>{{ tk.customer.assumed_name if tk.customer else '-' }}</strong></td>
+          <td>{{ tk.domain or '-' }}</td>
+          <td><span class="tag">{{ tk.ticket_type }}</span></td>
+          <td>
+            {% if tk.status == 'verified' %}
+            <span class="badge ok">{{ t('Verified') }}</span>
+            {% else %}
+            <span class="badge warn">{{ t('Requested') }}</span>
+            {% endif %}
+          </td>
+          <td class="small">{{ requester_names.get(tk.requested_by_id, '-') }}</td>
+          <td class="nowrap">
+            {% if tk.status != 'verified' %}
+            <form method="post" action="/admin/tickets/{{ tk.id }}/verify" style="display:inline"
+                  onsubmit="return confirm('{{ t('Confirm organization verification?') }}');">
+              <button class="btn sm" type="submit">{{ t('Verify OV') }}</button>
+            </form>
+            {% else %}
+            <span class="small muted">{{ tk.verified_by or '' }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty">{{ t('No tickets') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}{{ (t('Edit User') if user else t('Add User')) }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Edit User') if user else t('Add User') }}</h1>
+  <div class="sub">{{ t('Username is the login email') if user else t('Supports single and bulk paste creation') }}</div>
+</div>
+
+{% if user %}
+<div class="card">
+  <form method="post" action="/admin/users/{{ user.id }}/edit">
+    <div class="row">
+      <div class="field">
+        <label for="email">{{ t('Username (Email)') }}</label>
+        <input type="text" id="email" name="email" value="{{ user.email }}" required>
+      </div>
+      <div class="field">
+        <label for="full_name">{{ t('Full name') }}</label>
+        <input type="text" id="full_name" name="full_name" value="{{ user.full_name or '' }}">
+      </div>
+      <div class="field">
+        <label for="phone">{{ t('Phone') }}</label>
+        <input type="text" id="phone" name="phone" value="{{ user.phone or '' }}">
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="customer_id">{{ t('Customer') }}</label>
+        <select id="customer_id" name="customer_id">
+          <option value="">{{ t('(Not linked)') }}</option>
+          {% for c in customers %}
+          <option value="{{ c.id }}" {% if user.customer_id == c.id %}selected{% endif %}>{{ c.assumed_name }}{% if c.legal_name %} · {{ c.legal_name }}{% endif %}</option>
+          {% endfor %}
+        </select>
+        <div class="help">{{ t("Determines which company's balance and consumption records the user can see") }}</div>
+      </div>
+      <div class="field">
+        <label for="role">{{ t('Role') }}</label>
+        <select id="role" name="role">
+          <option value="user" {% if user.role == 'user' %}selected{% endif %}>{{ t('Customer User') }}</option>
+          <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ t('Admin') }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="status">{{ t('Status') }}</label>
+        <select id="status" name="status">
+          <option value="active" {% if user.status == 'active' %}selected{% endif %}>{{ t('Active') }}</option>
+          <option value="pending" {% if user.status == 'pending' %}selected{% endif %}>{{ t('Pending confirmation') }}</option>
+          <option value="disabled" {% if user.status == 'disabled' %}selected{% endif %}>{{ t('Disabled') }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="field" style="display:flex;gap:20px;">
+      <label class="check"><input type="checkbox" name="must_change_password" {% if user.must_change_password %}checked{% endif %}> {{ t('Must change password at next login') }}</label>
+      <label class="check"><input type="checkbox" name="must_bind_totp" {% if user.must_bind_totp %}checked{% endif %}> {{ t('Bind TOTP') }}</label>
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Save') }}</button>
+      <a class="btn ghost" href="/admin/users">{{ t('Back to List') }}</a>
+    </div>
+  </form>
+</div>
+{% else %}
+
+<div class="card">
+  <h2>{{ t('Single add') }}</h2>
+  <form method="post" action="/admin/users/new">
+    <div class="row">
+      <div class="field">
+        <label for="email">{{ t('Username (Email) *') }}</label>
+        <input type="text" id="email" name="email" placeholder="name@company.com" required>
+      </div>
+      <div class="field">
+        <label for="full_name">{{ t('Full name') }}</label>
+        <input type="text" id="full_name" name="full_name">
+      </div>
+      <div class="field">
+        <label for="phone">{{ t('Phone') }}</label>
+        <input type="text" id="phone" name="phone">
+      </div>
+    </div>
+    <div class="field">
+      <label for="customer_id">{{ t('Customer (leave empty to auto-match by email domain)') }}</label>
+      <select id="customer_id" name="customer_id">
+        <option value="">{{ t('(Auto match)') }}</option>
+        {% for c in customers %}
+        <option value="{{ c.id }}">{{ c.assumed_name }}{% if c.legal_name %} · {{ c.legal_name }}{% endif %}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <label class="check"><input type="checkbox" name="must_change_password" checked> {{ t('Must change password at next login') }}</label>
+      <label class="check"><input type="checkbox" name="must_bind_totp" checked> {{ t('Bind TOTP') }}</label>
+      <label class="check"><input type="checkbox" name="send_mail" checked> {{ t('Send confirmation email') }}</label>
+      <label class="check"><input type="checkbox" name="skip_confirm"> {{ t('Skip email confirmation (activate directly)') }}</label>
+    </div>
+    <div class="help">{{ t('When SMTP is not configured, emails are stored in the Outbox only; the admin can view the confirmation link there or use "Mark Confirmed".') }}</div>
+    <div class="btn-row"><button class="btn" type="submit">{{ t('Create User') }}</button></div>
+  </form>
+</div>
+
+<div class="card">
+  <h2>{{ t('Bulk add') }}</h2>
+  <form method="post" action="/admin/users/bulk">
+    <div class="field">
+      <label for="batch">{{ t('One user per line, format: email[,full name[,phone]]') }}</label>
+      <textarea id="batch" name="batch" rows="6" placeholder="a@company.com,Jack,13800000001&#10;b@company.com"></textarea>
+      <div class="help">{{ t('Customers are matched automatically by email domain; admin-added users are not restricted by the whitelist, but users not matched to a company will see no balance data. Invalid or existing emails are skipped.') }}</div>
+    </div>
+    <div class="field" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <label class="check"><input type="checkbox" name="must_change_password" checked> {{ t('Must change password at next login') }}</label>
+      <label class="check"><input type="checkbox" name="must_bind_totp" checked> {{ t('Bind TOTP') }}</label>
+      <label class="check"><input type="checkbox" name="send_mail" checked> {{ t('Send confirmation email') }}</label>
+      <label class="check"><input type="checkbox" name="skip_confirm"> {{ t('Skip email confirmation (activate directly)') }}</label>
+    </div>
+    <div class="btn-row"><button class="btn" type="submit">{{ t('Bulk Create') }}</button></div>
+  </form>
+</div>
+<div class="btn-row"><a class="btn ghost" href="/admin/users">{{ t('Back to List') }}</a></div>
+{% endif %}
+{% endblock %}

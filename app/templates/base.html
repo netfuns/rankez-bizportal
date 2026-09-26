@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="{{ locale }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ browser_title }}{% endblock %}</title>
+  {% if site_logo %}<link rel="icon" href="/uploads/{{ site_logo }}">{% endif %}
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{% if current_user %}{% if current_user.role == 'admin' %}/admin{% else %}/{% endif %}{% else %}/login{% endif %}">
+      {% if site_logo %}<img src="/uploads/{{ site_logo }}" alt="logo">{% endif %}
+      <span>{{ site_name }}</span>
+    </a>
+    {% if current_user %}
+    <nav class="nav">
+      {% if current_user.role == 'admin' %}
+        <a href="/admin" class="{{ 'active' if request.url.path == '/admin' }}">{{ t('Overview') }}</a>
+        <a href="/admin/customers" class="{{ 'active' if request.url.path.startswith('/admin/customers') }}">{{ t('Customers') }}</a>
+        <a href="/admin/users" class="{{ 'active' if request.url.path.startswith('/admin/users') }}">{{ t('Users') }}</a>
+        <a href="/admin/orders" class="{{ 'active' if request.url.path.startswith('/admin/orders') }}">{{ t('Orders') }}</a>
+        <a href="/admin/tickets" class="{{ 'active' if request.url.path.startswith('/admin/tickets') }}">{{ t('Tickets') }}</a>
+        <a href="/admin/mail" class="{{ 'active' if request.url.path.startswith('/admin/mail') }}">{{ t('Outbox') }}</a>
+        <a href="/admin/settings" class="{{ 'active' if request.url.path.startswith('/admin/settings') }}">{{ t('Settings') }}</a>
+        <a href="/admin/audit-log" class="{{ 'active' if request.url.path.startswith('/admin/audit-log') }}">{{ t('Audit') }}</a>
+      {% else %}
+        <a href="/" class="{{ 'active' if request.url.path == '/' }}">{{ t('Balance & Consumption') }}</a>
+        <a href="/profile" class="{{ 'active' if request.url.path.startswith('/profile') }}">{{ t('Profile') }}</a>
+      {% endif %}
+    </nav>
+    <div class="userbox">
+      <form method="get" action="/set-locale" class="lang-form">
+        <select name="lang" onchange="this.form.submit()">
+          {% for l in locales %}
+          <option value="{{ l }}" {% if locale == l %}selected{% endif %}>{{ {'en':'English','zh-CN':'简体中文','zh-TW':'繁體中文'}[l] }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="next" value="{{ request.url.path }}">
+      </form>
+      <span class="who">{{ current_user.display_name }}</span>
+      <a href="/logout">{{ t('Logout') }}</a>
+    </div>
+    {% else %}
+    <nav class="nav">
+      <a href="/login">{{ t('Login') }}</a>
+      <a href="/register">{{ t('Register') }}</a>
+      <form method="get" action="/set-locale" class="lang-form">
+        <select name="lang" onchange="this.form.submit()">
+          {% for l in locales %}
+          <option value="{{ l }}" {% if locale == l %}selected{% endif %}>{{ {'en':'English','zh-CN':'简体中文','zh-TW':'繁體中文'}[l] }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="next" value="{{ request.url.path }}">
+      </form>
+    </nav>
+    {% endif %}
+  </div>
+</header>
+
+<main class="wrap">
+  {% if msg %}
+  <div class="alert {{ kind if kind else 'info' }}">{{ msg }}</div>
+  {% endif %}
+  {% block content %}{% endblock %}
+</main>
+<script src="/static/app.js"></script>
+<script>
+  window.I18N = {
+    'Copied': {{ t('Copied')|tojson }},
+    'Enter and press Enter to add': {{ t('Enter and press Enter to add')|tojson }},
+    'Remove': {{ t('Remove')|tojson }},
+    'Selected:': {{ t('Selected:')|tojson }},
+    'No matching customer. Please pick one from the dropdown list.': {{ t('No matching customer. Please pick one from the dropdown list.')|tojson }},
+    'Select users to delete first': {{ t('Select users to delete first')|tojson }},
+    'Confirm deleting the selected %d users?': {{ t('Confirm deleting the selected %d users?')|tojson }},
+    'You are submitting an "Organization Verification" request. Continue?': {{ t('You are submitting an "Organization Verification" request. Continue?')|tojson }}
+  };
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

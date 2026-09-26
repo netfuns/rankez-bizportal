@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}{{ (t('Edit Order') if order else t('New Order')) }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ (t('Edit Order') ~ ' #' ~ order.id) if order else t('New Order') }}</h1>
+  <div class="sub">{{ t('Balance can only be adjusted by the admin via orders') }}</div>
+</div>
+
+<div class="card">
+  <form method="post" action="{% if order %}/admin/orders/{{ order.id }}/edit{% else %}/admin/orders/new{% endif %}" id="order-form">
+    <div class="row">
+      <div class="field">
+        <label for="customer_search">{{ t('Customer name (searchable)') }}</label>
+        <input type="text" id="customer_search" list="customer-list" autocomplete="off"
+               value="{% if order and order.customer %}{{ order.customer.assumed_name }}{% elif customer_id %}{% for c in customers %}{% if c.id|string == customer_id %}{{ c.assumed_name }}{% endif %}{% endfor %}{% endif %}">
+        <datalist id="customer-list">
+          {% for c in customers %}
+          <option value="{{ c.assumed_name }}" data-id="{{ c.id }}">{% if c.legal_name %}{{ c.legal_name }} · {% endif %}{{ c.assumed_name }}</option>
+          {% endfor %}
+        </datalist>
+        <input type="hidden" name="customer_id" id="customer_id" value="{% if order %}{{ order.customer_id }}{% else %}{{ customer_id }}{% endif %}">
+        <div class="help" id="customer-hint">{{ t('Select from the list or type the company name') }}</div>
+      </div>
+      <div class="field">
+        <label for="po_number">{{ t('PO Number') }}</label>
+        <input type="text" id="po_number" name="po_number" value="{{ order.po_number or '' if order else '' }}">
+      </div>
+      <div class="field">
+        <label for="order_type">{{ t('Order Type') }}</label>
+        <select id="order_type" name="order_type">
+          {% for tp in order_types %}
+          <option value="{{ tp.name }}" {% if order and order.order_type == tp.name %}selected{% endif %}>
+            {{ tp.name }}{{ t('(adds balance)') if tp.effect == 'credit' else t('(deducts balance)') }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="product_name">{{ t('Product Name') }}</label>
+        <input type="text" id="product_name" name="product_name" value="{{ order.product_name or '' if order else '' }}">
+      </div>
+      <div class="field">
+        <label for="quantity">{{ t('Quantity') }}</label>
+        <input type="text" id="quantity" name="quantity" value="{{ '{:g}'.format(order.quantity) if order else '1' }}">
+      </div>
+      <div class="field">
+        <label for="amount">{{ t('Amount (CNY)') }} *</label>
+        <input type="text" id="amount" name="amount" value="{{ '{:g}'.format(order.amount) if order else '' }}" required>
+        <div class="help" id="amount-hint">{{ t('Top-ups add balance; new purchase / renewal deduct balance') }}</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="remark">{{ t('Remark') }}</label>
+      <textarea id="remark" name="remark" rows="2">{{ order.remark or '' if order else '' }}</textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Save Order') }}</button>
+      <a class="btn ghost" href="/admin/orders">{{ t('Back to List') }}</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

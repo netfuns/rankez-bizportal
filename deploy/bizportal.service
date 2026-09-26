@@ -1,0 +1,18 @@
+[Unit]
+Description=BizPortal customer balance portal (uvicorn)
+After=network.target
+
+[Service]
+Type=simple
+User=bizportal
+Group=bizportal
+WorkingDirectory=/opt/bizportal
+EnvironmentFile=/etc/bizportal/bizportal.env
+ExecStart=/opt/bizportal/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8888 --proxy-headers --forwarded-allow-ips=*
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Balance & Consumption Records') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ (customer.assumed_name if customer else t('My Company')) }} · {{ t('Balance & Consumption Records') }}</h1>
+  <div class="sub">{{ current_user.email }}</div>
+</div>
+
+{% if not customer %}
+<div class="card">
+  <div class="empty">{{ t('Your account is not linked to a customer company. Please contact the administrator.') }}</div>
+</div>
+{% else %}
+<div class="grid grid-3" style="margin-bottom:18px;">
+  <div class="stat balance-hero">
+    <div class="label">{{ t('Current Balance (CNY)') }}</div>
+    <div class="value">{{ balance|money }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">{{ t('Total Top-ups') }}</div>
+    <div class="value">{{ orders|selectattr('effect', 'equalto', 'credit')|map(attribute='amount')|sum|money }}</div>
+  </div>
+  <div class="stat">
+    <div class="label">{{ t('Total Consumption') }}</div>
+    <div class="value">{{ orders|selectattr('effect', 'equalto', 'debit')|map(attribute='amount')|sum|money }}</div>
+  </div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>{{ t('Company Information') }}</h2>
+    <table>
+      <tr><th style="width:130px;">{{ t('Assumed Name') }}</th><td>{{ customer.assumed_name }}</td></tr>
+      <tr><th>{{ t('Legal Name') }}</th><td>{{ customer.legal_name or '-' }}</td></tr>
+      <tr><th>{{ t('Registration Address') }}</th><td>{{ customer.registration_address or '-' }}</td></tr>
+      <tr><th>{{ t('Telephone') }}</th><td>{{ customer.telephone or '-' }}</td></tr>
+      <tr><th>{{ t('Organization Contact') }}</th><td>
+        {% if customer.org_contact_id %}{{ contact_names.get(customer.org_contact_id, '-') }}{% else %}-{% endif %}
+      </td></tr>
+      <tr><th>{{ t('Technical Contact') }}</th><td>
+        {% if customer.tech_contact_id %}{{ contact_names.get(customer.tech_contact_id, '-') }}{% else %}-{% endif %}
+      </td></tr>
+    </table>
+    <div class="divider"></div>
+    <h2>{{ t('Company Domains') }}</h2>
+    <table>
+      <tbody>
+        {% for d in customer.domains %}
+        <tr>
+          <th style="width:40%;">{{ d.domain }}</th>
+          <td>
+            {% if d.ov_status == 'verified' %}
+              <span class="badge ok ov-badge">{{ t('OV Verified') }}</span>
+            {% elif d.ov_status == 'verifying' %}
+              <span class="badge info ov-badge">{{ t('OV In Review') }}</span>
+            {% elif can_request_ov %}
+              <form method="post" action="/company/ov-request" style="display:inline"
+                    onsubmit="return confirmOv('{{ t('You are submitting an \"Organization Verification\" request. Continue?') }}');">
+                <input type="hidden" name="domain" value="{{ d.domain }}">
+                <button class="btn danger sm ov-btn" type="submit">{{ t('OV Request') }}</button>
+              </form>
+            {% else %}
+              <span class="muted small">-</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>{{ t('Company Members') }}</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>{{ t('Email') }}</th><th>{{ t('Full name') }}</th><th>{{ t('Phone') }}</th></tr></thead>
+        <tbody>
+          {% for m in members %}
+          <tr><td>{{ m.email }}</td><td>{{ m.full_name or '-' }}</td><td>{{ m.phone or '-' }}</td></tr>
+          {% else %}
+          <tr><td colspan="3" class="empty">{{ t('No members yet') }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('Consumption Records') }}</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Time') }}</th>
+          <th>{{ t('PO Number') }}</th>
+          <th>{{ t('Type') }}</th>
+          <th>{{ t('Product Name') }}</th>
+          <th class="num">{{ t('Quantity') }}</th>
+          <th class="num">{{ t('Amount (CNY)') }}</th>
+          <th class="num">{{ t('Balance After') }}</th>
+          <th>{{ t('Remark') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="nowrap">{{ o.created_at|dt }}</td>
+          <td>{{ o.po_number or '-' }}</td>
+          <td>
+            <span class="badge {{ 'ok' if o.effect == 'credit' else 'err' }}">{{ o.order_type }}</span>
+          </td>
+          <td>{{ o.product_name or '-' }}</td>
+          <td class="num">{{ o.quantity|money }}</td>
+          <td class="num {{ 'credit' if o.effect == 'credit' else 'debit' }}">{{ '+' if o.effect == 'credit' else '-' }}{{ o.amount|money }}</td>
+          <td class="num">{{ o.balance_after|money }}</td>
+          <td class="small muted">{{ o.remark or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="empty">{{ t('No records') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

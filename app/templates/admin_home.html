@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Admin Overview') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Admin Overview') }}</h1>
+  <div class="sub">{{ t('Customers, users, orders and balance overview') }}</div>
+</div>
+
+<div class="grid grid-4" style="margin-bottom:18px;">
+  <div class="stat"><div class="label">{{ t('Customers') }}</div><div class="value">{{ stats.customers }}</div></div>
+  <div class="stat"><div class="label">{{ t('Whitelist Domains') }}</div><div class="value">{{ stats.domains }}</div></div>
+  <div class="stat"><div class="label">{{ t('Customer Users') }}</div><div class="value">{{ stats.users }}</div></div>
+  <div class="stat {{ 'accent' if stats.pending else '' }}"><div class="label">{{ t('Pending Email Confirmation') }}</div><div class="value">{{ stats.pending }}</div></div>
+</div>
+<div class="grid grid-3" style="margin-bottom:18px;">
+  <div class="stat brand"><div class="label">{{ t('Total Customer Balance (CNY)') }}</div><div class="value">{{ stats.balance|money }}</div></div>
+  <div class="stat"><div class="label">{{ t('Orders') }}</div><div class="value">{{ stats.orders }}</div></div>
+  <div class="stat {{ 'accent' if stats.pending_mail else '' }}">
+    <div class="label">{{ t('Unsent Emails') }}</div><div class="value">{{ stats.pending_mail }}</div>
+    {% if stats.pending_mail %}<div class="small muted"><a href="/admin/mail">{{ t('View Outbox') }}</a></div>{% endif %}
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('Recent Orders') }}</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>{{ t('Time') }}</th><th>{{ t('Customer') }}</th><th>{{ t('PO Number') }}</th><th>{{ t('Type') }}</th><th>{{ t('Product') }}</th><th class="num">{{ t('Amount (CNY)') }}</th><th class="num">{{ t('Balance After') }}</th></tr>
+      </thead>
+      <tbody>
+        {% for o in recent_orders %}
+        <tr>
+          <td class="nowrap">{{ o.created_at|dt }}</td>
+          <td>{{ o.customer.assumed_name if o.customer else '-' }}</td>
+          <td>{{ o.po_number or '-' }}</td>
+          <td><span class="badge {{ 'ok' if o.effect == 'credit' else 'err' }}">{{ o.order_type }}</span></td>
+          <td>{{ o.product_name or '-' }}</td>
+          <td class="num {{ 'credit' if o.effect == 'credit' else 'debit' }}">{{ '+' if o.effect == 'credit' else '-' }}{{ o.amount|money }}</td>
+          <td class="num">{{ o.balance_after|money }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="empty">{{ t('No orders') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="btn-row"><a class="btn ghost sm" href="/admin/orders/new">{{ t('+ New Order') }}</a></div>
+</div>
+{% endblock %}

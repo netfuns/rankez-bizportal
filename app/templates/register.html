@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Register') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      {% if site_logo %}<img src="/uploads/{{ site_logo }}" alt="logo">{% endif %}
+      <div class="name">{{ t('Self-service Registration') }}</div>
+      <div class="tip">{{ t('Please use your company email to register') }}</div>
+    </div>
+    <div class="card">
+      <div class="alert info">{{ t('Only emails under whitelisted customer domains can self-register. After registration, activate via the confirmation link in the email and log in with the temporary password provided in the email.') }}</div>
+      <form method="post" action="/register">
+        <div class="field">
+          <label for="email">{{ t('Email (will be your login username)') }}</label>
+          <input type="email" id="email" name="email" required autofocus placeholder="name@company.com">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="full_name">{{ t('Full name (optional)') }}</label>
+            <input type="text" id="full_name" name="full_name">
+          </div>
+          <div class="field">
+            <label for="phone">{{ t('Phone (optional)') }}</label>
+            <input type="text" id="phone" name="phone">
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" type="submit">{{ t('Submit Registration') }}</button>
+          <a class="btn ghost" href="/login">{{ t('Back to Login') }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

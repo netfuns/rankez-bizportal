@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Customer Management') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Customer Management') }}</h1>
+  <div class="sub">{{ t('Maintain company info, whitelist domains and contacts') }}</div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get" action="/admin/customers">
+    <div class="field">
+      <label for="q">{{ t('Search assumed name / legal name') }}</label>
+      <input type="text" id="q" name="q" value="{{ q }}">
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Search') }}</button>
+      <a class="btn ghost" href="/admin/customers">{{ t('Reset') }}</a>
+      <a class="btn" href="/admin/customers/new">{{ t('+ Add Customer') }}</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Assumed Name') }}</th><th>{{ t('Legal Name') }}</th><th>{{ t('Whitelist Domains') }}</th>
+          <th>{{ t('Organization Contact') }}</th><th>{{ t('Technical Contact') }}</th>
+          <th class="num">{{ t('Members') }}</th><th class="num">{{ t('Balance (CNY)') }}</th><th>{{ t('Status') }}</th><th>{{ t('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        {% set org_name, tech_name = contact_names.get(c.id, ('-', '-')) %}
+        <tr>
+          <td><strong>{{ c.assumed_name }}</strong></td>
+          <td>{{ c.legal_name or '-' }}</td>
+          <td>
+            <div class="tag-list">
+              {% for d in c.domains %}
+              <span class="tag">{{ d.domain }}{% if d.ov_status == 'verified' %} ✓{% elif d.ov_status == 'verifying' %} …{% endif %}</span>
+              {% endfor %}
+            </div>
+          </td>
+          <td class="small">{{ org_name or '-' }}</td>
+          <td class="small">{{ tech_name or '-' }}</td>
+          <td class="num">{{ counts.get(c.id, 0) }}</td>
+          <td class="num">{{ c.balance|money }}</td>
+          <td>{% if c.is_active %}<span class="badge ok">{{ t('Enabled') }}</span>{% else %}<span class="badge gray">{{ t('Disabled') }}</span>{% endif %}</td>
+          <td class="nowrap">
+            <a class="btn ghost sm" href="/admin/customers/{{ c.id }}/edit">{{ t('Edit') }}</a>
+            <form method="post" action="/admin/customers/{{ c.id }}/delete" style="display:inline" onsubmit="return confirm('{{ t('Confirm deleting this customer? Its orders will be deleted as well.') }}');">
+              <button class="btn ghost sm" type="submit">{{ t('Delete') }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="9" class="empty">{{ t('No customers. Add a customer and configure whitelist domains first.') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

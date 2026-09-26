@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Audit Log') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Audit Log') }}</h1>
+  <div class="sub">{{ t('Last 200 admin operations') }}</div>
+</div>
+
+<div class="card">
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>{{ t('Time') }}</th><th>{{ t('Operator') }}</th><th>{{ t('Action') }}</th><th>{{ t('Target') }}</th><th>{{ t('Detail') }}</th></tr></thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="nowrap small">{{ r.created_at|dt }}</td>
+          <td>{{ r.actor }}</td>
+          <td><span class="badge brand">{{ r.action }}</span></td>
+          <td>{{ r.target or '-' }}</td>
+          <td class="small muted">{{ r.detail or '' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="empty">{{ t('No records') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

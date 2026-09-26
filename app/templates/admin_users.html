@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}{{ t('User Management') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('User Management') }}</h1>
+  <div class="sub">{{ t('Manually add and manage customer user accounts') }}</div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get" action="/admin/users">
+    <div class="field">
+      <label for="q">{{ t('Keyword (email / full name)') }}</label>
+      <input type="text" id="q" name="q" value="{{ q }}">
+    </div>
+    <div class="field">
+      <label for="status">{{ t('Status') }}</label>
+      <select id="status" name="status">
+        <option value="">{{ t('All') }}</option>
+        <option value="active" {% if status == 'active' %}selected{% endif %}>{{ t('Active') }}</option>
+        <option value="pending" {% if status == 'pending' %}selected{% endif %}>{{ t('Pending confirmation') }}</option>
+        <option value="disabled" {% if status == 'disabled' %}selected{% endif %}>{{ t('Disabled') }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="customer_id">{{ t('Customer') }}</label>
+      <select id="customer_id" name="customer_id">
+        <option value="">{{ t('All') }}</option>
+        {% for c in customers %}
+        <option value="{{ c.id }}" {% if customer_id == c.id|string %}selected{% endif %}>{{ c.assumed_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Filter') }}</button>
+      <a class="btn ghost" href="/admin/users">{{ t('Reset') }}</a>
+      <a class="btn" href="/admin/users/new">{{ t('+ Add User') }}</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="btn-row" style="margin-bottom:12px;">
+    <label class="check"><input type="checkbox" id="check-all"> {{ t('Select all') }}</label>
+    <button class="btn danger sm" type="button" data-bulk-delete="/admin/users/bulk-delete">{{ t('Bulk delete selected') }}</button>
+    <span class="small muted">{{ t('Admin accounts cannot be deleted') }}</span>
+  </div>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px;"></th>
+          <th>{{ t('Username (Email)') }}</th><th>{{ t('Full name') }}</th><th>{{ t('Phone') }}</th><th>{{ t('Customer') }}</th>
+          <th>{{ t('Role') }}</th><th>{{ t('Status') }}</th><th>TOTP</th><th>{{ t('Created') }}</th><th>{{ t('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        <tr>
+          <td>{% if u.role != 'admin' %}<input type="checkbox" class="row-check" value="{{ u.id }}">{% endif %}</td>
+          <td>{{ u.email }}</td>
+          <td>{{ u.full_name or '-' }}</td>
+          <td>{{ u.phone or '-' }}</td>
+          <td>{{ u.customer.assumed_name if u.customer else '-' }}</td>
+          <td>{% if u.role == 'admin' %}<span class="badge brand">{{ t('Admin') }}</span>{% else %}<span class="badge gray">{{ t('Customer User') }}</span>{% endif %}</td>
+          <td>
+            {% if u.status == 'active' %}<span class="badge ok">{{ t('Active') }}</span>
+            {% elif u.status == 'pending' %}<span class="badge warn">{{ t('Pending confirmation') }}</span>
+            {% else %}<span class="badge err">{{ t('Disabled') }}</span>{% endif %}
+            {% if u.must_change_password %}<span class="badge gray">{{ t('Needs password change') }}</span>{% endif %}
+            {% if u.must_bind_totp %}<span class="badge gray">{{ t('Needs TOTP binding') }}</span>{% endif %}
+          </td>
+          <td>{% if u.totp_secret %}<span class="badge ok">{{ t('Bound') }}</span>{% else %}<span class="badge err">{{ t('Not bound') }}</span>{% endif %}</td>
+          <td class="nowrap small">{{ u.created_at|dt }}</td>
+          <td class="nowrap">
+            <a class="btn ghost sm" href="/admin/users/{{ u.id }}/edit">{{ t('Edit') }}</a>
+            {% if u.status == 'pending' %}
+            <form method="post" action="/admin/users/{{ u.id }}/confirm" style="display:inline">
+              <button class="btn ghost sm" type="submit">{{ t('Mark Confirmed') }}</button>
+            </form>
+            {% endif %}
+            <form method="post" action="/admin/users/{{ u.id }}/reset-password" style="display:inline" onsubmit="return confirm('{{ t('Confirm password reset?') }}');">
+              <button class="btn ghost sm" type="submit">{{ t('Reset Password') }}</button>
+            </form>
+            <form method="post" action="/admin/users/{{ u.id }}/reset-totp" style="display:inline" onsubmit="return confirm('{{ t('Confirm force TOTP reset? The user must rebind at next login.') }}');">
+              <button class="btn ghost sm" type="submit">{{ t('Reset TOTP') }}</button>
+            </form>
+            {% if u.role != 'admin' %}
+            <form method="post" action="/admin/users/{{ u.id }}/delete" style="display:inline" onsubmit="return confirm('{{ t('Confirm deleting this user?') }}');">
+              <button class="btn ghost sm" type="submit">{{ t('Delete') }}</button>
+            </form>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="10" class="empty">{{ t('No users') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

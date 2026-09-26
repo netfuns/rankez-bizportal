@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Bind TOTP') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ (t('Rebind') if has_totp else t('Bind TOTP')) ~ ' TOTP' }}</h1>
+</div>
+<div class="grid grid-2">
+  <div class="card">
+    <h2>{{ t('1. Scan QR code') }}</h2>
+    <div class="totp-box">
+      <img src="{{ qr }}" alt="TOTP QR">
+      <div class="small muted">{{ t('If the QR code does not display, you can manually enter the secret below') }}</div>
+      <div class="secret">{{ secret }}</div>
+      <button class="btn ghost sm copy-btn" type="button" data-copy="{{ secret }}">{{ t('Copy secret') }}</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>{{ t('2. Enter the 6-digit code to complete binding') }}</h2>
+    <form method="post" action="/setup-totp">
+      <input type="hidden" name="secret" value="{{ secret }}">
+      {% if has_totp %}
+      <div class="field">
+        <label for="current_code">{{ t('Current code (verify identity)') }}</label>
+        <input type="text" id="current_code" name="current_code" inputmode="numeric" pattern="[0-9]*" required>
+      </div>
+      {% endif %}
+      <div class="field">
+        <label for="code">{{ t("New secret's 6-digit code") }}</label>
+        <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]*" required autofocus>
+      </div>
+      <div class="btn-row">
+        <button class="btn" type="submit">{{ t('Confirm Binding') }}</button>
+        <a class="btn ghost" href="/profile">{{ t('Back') }}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

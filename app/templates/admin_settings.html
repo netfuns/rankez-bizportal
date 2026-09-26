@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}{{ t('System Settings') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('System Settings') }}</h1>
+  <div class="sub">{{ t('Site branding, access domains, order types, SMTP and session policy') }}</div>
+</div>
+
+<form method="post" action="/admin/settings" enctype="application/x-www-form-urlencoded">
+<div class="grid grid-2">
+  <div class="card">
+    <h2>{{ t('Site Branding') }}</h2>
+    <div class="field">
+      <label for="site_name">{{ t('Site Name') }}</label>
+      <input type="text" id="site_name" name="site_name" value="{{ values.site_name }}">
+    </div>
+    <div class="field">
+      <label for="browser_title">{{ t('Browser Title') }}</label>
+      <input type="text" id="browser_title" name="browser_title" value="{{ values.browser_title }}">
+    </div>
+    <div class="field">
+      <label>{{ t('Site Logo') }}</label>
+      {% if values.site_logo %}
+        <div style="margin-bottom:8px;"><img src="/uploads/{{ values.site_logo }}" alt="logo" style="height:34px;"></div>
+      {% else %}
+        <div class="help">{{ t('Currently using text logo') }}</div>
+      {% endif %}
+      <div class="help">{{ t('Upload the logo in the "Logo Upload" section at the bottom') }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>{{ t('Access & Security') }}</h2>
+    <div class="field">
+      <label for="allowed_hosts">{{ t('Platform bound domains (comma separated)') }}</label>
+      <input type="text" id="allowed_hosts" name="allowed_hosts" value="{{ values.allowed_hosts }}" placeholder="portal.example.com">
+      <div class="help">{{ t('Leave empty to allow all hosts. Current host: ') }}<span class="mono">{{ current_host }}</span>. {{ t('After setting, the platform is only reachable via these domains.') }}</div>
+    </div>
+    <div class="field">
+      <label for="session_timeout_minutes">{{ t('Session timeout (minutes)') }}</label>
+      <input type="text" id="session_timeout_minutes" name="session_timeout_minutes" value="{{ values.session_timeout_minutes }}">
+      <div class="help">{{ t('Auto logout after inactivity (minimum 5 minutes)') }}</div>
+    </div>
+    <div class="field" style="display:flex;gap:20px;flex-wrap:wrap;">
+      <label class="check"><input type="checkbox" name="force_totp" {% if values.force_totp == 'true' %}checked{% endif %}> {{ t('Force all users to bind TOTP') }}</label>
+      <label class="check"><input type="checkbox" name="registration_enabled" {% if values.registration_enabled == 'true' %}checked{% endif %}> {{ t('Enable self-service registration') }}</label>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('Order Types') }}</h2>
+  <div class="field">
+    <label for="order_types">{{ t('One per line, format: name,credit or name,debit') }}</label>
+    <textarea id="order_types" name="order_types" rows="4">{{ order_types_text }}</textarea>
+    <div class="help">{{ t('credit adds balance (e.g. Top-up); debit deducts (e.g. New purchase, Renewal)') }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('Ticket Types') }}</h2>
+  <div class="field">
+    <label for="ticket-types-input">{{ t('Press Enter to add a type tag; the first tag is the default') }}</label>
+    <div class="tag-input" id="ticket-types-input" data-name="ticket_types" data-value="{{ ticket_types|join(',') }}" data-plain="1"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('SMTP Email Service') }}</h2>
+  {% if not smtp_ready %}
+  <div class="alert warn">{{ t('SMTP not configured. Confirmation emails are stored in the Outbox only; the admin can forward the confirmation link manually or use "Mark Confirmed" in user management.') }}</div>
+  {% endif %}
+  <div class="row">
+    <div class="field">
+      <label for="smtp_host">{{ t('SMTP Server') }}</label>
+      <input type="text" id="smtp_host" name="smtp_host" value="{{ values.smtp_host }}" placeholder="smtp.example.com">
+    </div>
+    <div class="field">
+      <label for="smtp_port">{{ t('Port') }}</label>
+      <input type="text" id="smtp_port" name="smtp_port" value="{{ values.smtp_port }}">
+      <div class="help">{{ t('Port 465 uses SSL automatically; other ports use STARTTLS per the switch below') }}</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label for="smtp_user">{{ t('Username') }}</label>
+      <input type="text" id="smtp_user" name="smtp_user" value="{{ values.smtp_user }}">
+    </div>
+    <div class="field">
+      <label for="smtp_password">{{ t('Password') }}</label>
+      <input type="password" id="smtp_password" name="smtp_password" placeholder="{{ t('Leave empty to keep the current password') }}">
+      <div class="help">{{ t('Stored obfuscated with the system key; never saved in plain text') }}</div>
+    </div>
+    <div class="field">
+      <label for="smtp_from">{{ t('From address') }}</label>
+      <input type="text" id="smtp_from" name="smtp_from" value="{{ values.smtp_from }}" placeholder="noreply@example.com">
+    </div>
+  </div>
+  <div class="field">
+    <label class="check"><input type="checkbox" name="smtp_tls" {% if values.smtp_tls == 'true' %}checked{% endif %}> {{ t('Enable STARTTLS') }}</label>
+  </div>
+</div>
+
+<div class="card">
+  <div class="field">
+    <label class="check"><input type="checkbox" name="force" value="1"> {{ t('Still save (ignore the "current host not in allowed list" protection)') }}</label>
+  </div>
+  <div class="btn-row">
+    <button class="btn" type="submit">{{ t('Save Settings') }}</button>
+  </div>
+</div>
+</form>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>{{ t('Logo Upload') }}</h2>
+    <form method="post" action="/admin/settings/logo" enctype="multipart/form-data">
+      <div class="field">
+        <input type="file" name="logo" accept=".png,.jpg,.jpeg,.svg,.webp,.gif">
+      </div>
+      <div class="btn-row">
+        <button class="btn" type="submit">{{ t('Submit') }}</button>
+      </div>
+    </form>
+    <div class="divider"></div>
+    <form method="post" action="/admin/settings/logo/clear">
+      <button class="btn ghost sm" type="submit">{{ t('Clear logo (use text)') }}</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>{{ t('SMTP Connectivity Test') }}</h2>
+    <form method="post" action="/admin/settings/smtp-test">
+      <div class="field">
+        <label for="test_to">{{ t('Test recipient') }}</label>
+        <input type="text" id="test_to" name="test_to" placeholder="someone@example.com">
+      </div>
+      <div class="btn-row"><button class="btn" type="submit">{{ t('Send Test Email') }}</button></div>
+      <div class="help">{{ t('Save SMTP settings before testing') }}</div>
+    </form>
+  </div>
+</div>
+{% endblock %}

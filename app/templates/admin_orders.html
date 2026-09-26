@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Order Management') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Order Management') }}</h1>
+  <div class="sub">{{ t('Top-ups add balance; new purchase / renewal deduct balance') }}</div>
+</div>
+
+<div class="card">
+  <form class="filters" method="get" action="/admin/orders">
+    <div class="field">
+      <label for="customer_id">{{ t('Customer') }}</label>
+      <select id="customer_id" name="customer_id">
+        <option value="">{{ t('All') }}</option>
+        {% for c in customers %}
+        <option value="{{ c.id }}" {% if customer_id == c.id|string %}selected{% endif %}>{{ c.assumed_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="order_type">{{ t('Type') }}</label>
+      <select id="order_type" name="order_type">
+        <option value="">{{ t('All') }}</option>
+        {% for tp in order_types %}
+        <option value="{{ tp.name }}" {% if order_type == tp.name %}selected{% endif %}>{{ tp.name }}{{ t('(adds balance)') if tp.effect == 'credit' else t('(deducts balance)') }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="field">
+      <label for="q">{{ t('Keyword (PO / product / remark)') }}</label>
+      <input type="text" id="q" name="q" value="{{ q }}">
+    </div>
+    <div class="btn-row">
+      <button class="btn" type="submit">{{ t('Filter') }}</button>
+      <a class="btn ghost" href="/admin/orders">{{ t('Reset') }}</a>
+      <a class="btn" href="/admin/orders/new">{{ t('+ New Order') }}</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Time') }}</th><th>{{ t('Customer') }}</th><th>{{ t('PO Number') }}</th><th>{{ t('Type') }}</th><th>{{ t('Product Name') }}</th>
+          <th class="num">{{ t('Quantity') }}</th><th class="num">{{ t('Amount (CNY)') }}</th><th class="num">{{ t('Balance After') }}</th>
+          <th>{{ t('Operator') }}</th><th>{{ t('Remark') }}</th><th>{{ t('Actions') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td class="nowrap small">{{ o.created_at|dt }}</td>
+          <td>{{ o.customer.assumed_name if o.customer else '-' }}</td>
+          <td>{{ o.po_number or '-' }}</td>
+          <td><span class="badge {{ 'ok' if o.effect == 'credit' else 'err' }}">{{ o.order_type }}</span></td>
+          <td>{{ o.product_name or '-' }}</td>
+          <td class="num">{{ o.quantity|money }}</td>
+          <td class="num {{ 'credit' if o.effect == 'credit' else 'debit' }}">{{ '+' if o.effect == 'credit' else '-' }}{{ o.amount|money }}</td>
+          <td class="num">{{ o.balance_after|money }}</td>
+          <td class="small">{{ o.created_by or '-' }}</td>
+          <td class="small muted">{{ o.remark or '' }}</td>
+          <td class="nowrap">
+            <a class="btn ghost sm" href="/admin/orders/{{ o.id }}/edit">{{ t('Edit') }}</a>
+            <form method="post" action="/admin/orders/{{ o.id }}/delete" style="display:inline" onsubmit="return confirm('{{ t('Confirm deleting this order? The customer balance will be recalculated.') }}');">
+              <button class="btn ghost sm" type="submit">{{ t('Delete') }}</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="11" class="empty">{{ t('No orders') }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="divider"></div>
+  <form method="post" action="/admin/orders/recalculate" onsubmit="return confirm('{{ t('Confirm recalculating all balances from the order ledger?') }}');">
+    <button class="btn ghost sm" type="submit">{{ t('Recalculate all customer balances') }}</button>
+    <span class="small muted">{{ t("Recomputes every customer's balance from the order ledger (for troubleshooting)") }}</span>
+  </form>
+</div>
+{% endblock %}

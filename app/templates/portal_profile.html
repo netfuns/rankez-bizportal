@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Profile') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Profile') }}</h1>
+  <div class="sub">{{ current_user.email }}{% if current_user.customer %} · {{ current_user.customer.assumed_name }}{% endif %}</div>
+</div>
+
+<div class="grid grid-2">
+  <div class="card">
+    <h2>{{ t('Basic Information') }}</h2>
+    <form method="post" action="/profile">
+      <div class="field">
+        <label for="full_name">{{ t('Full name') }}</label>
+        <input type="text" id="full_name" name="full_name" value="{{ current_user.full_name or '' }}">
+      </div>
+      <div class="field">
+        <label for="phone">{{ t('Phone') }}</label>
+        <input type="text" id="phone" name="phone" value="{{ current_user.phone or '' }}">
+      </div>
+      <div class="field">
+        <label>{{ t('Login username (email)') }}</label>
+        <input type="text" value="{{ current_user.email }}" disabled>
+        <div class="help">{{ t('Username cannot be changed. Contact the administrator if needed.') }}</div>
+      </div>
+      <div class="btn-row"><button class="btn" type="submit">{{ t('Save Profile') }}</button></div>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>{{ t('Change Password') }}</h2>
+    <form method="post" action="/profile/password">
+      <div class="field">
+        <label for="current_password">{{ t('Current password') }}</label>
+        <input type="password" id="current_password" name="current_password" required>
+      </div>
+      <div class="field">
+        <label for="new_password">{{ t('New password') }}</label>
+        <input type="password" id="new_password" name="new_password" required>
+        <div class="help">{{ t('At least 10 characters, including uppercase, lowercase, digits and special characters') }}</div>
+      </div>
+      <div class="field">
+        <label for="confirm_password">{{ t('Confirm new password') }}</label>
+        <input type="password" id="confirm_password" name="confirm_password" required>
+      </div>
+      <div class="btn-row"><button class="btn" type="submit">{{ t('Change Password') }}</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <h2>{{ t('Two-factor authentication (TOTP)') }}</h2>
+  <table>
+    <tr><th style="width:130px;">{{ t('Binding status') }}</th>
+      <td>
+        {% if current_user.totp_secret %}
+          <span class="badge ok">{{ t('Bound') }}</span>
+          {% if current_user.totp_bound_at %} <span class="small muted">{{ t('Bound at') }}: {{ current_user.totp_bound_at|dt }}</span>{% endif %}
+        {% else %}
+          <span class="badge err">{{ t('Not bound') }}</span>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+  <div class="btn-row">
+    <a class="btn" href="/setup-totp">{{ t('Rebind') if current_user.totp_secret else t('Bind Now') }}</a>
+    {% if current_user.totp_secret %}
+    <button class="btn ghost" type="button" onclick="document.getElementById('reset-totp').style.display='block'">{{ t('Reset TOTP') }}</button>
+    {% endif %}
+  </div>
+  {% if current_user.totp_secret %}
+  <div id="reset-totp" style="display:none;margin-top:14px;">
+    <div class="divider"></div>
+    <div class="alert warn">{{ t('After resetting, you must rebind the authenticator. Please verify with the CURRENT 6-digit code from your authenticator app.') }}</div>
+    <form method="post" action="/profile/totp/reset">
+      <div class="field">
+        <label for="code">{{ t('Current one-time code') }}</label>
+        <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]*" required>
+      </div>
+      <div class="btn-row"><button class="btn danger" type="submit">{{ t('Verify and Reset') }}</button></div>
+    </form>
+  </div>
+  {% endif %}
+  {% if current_user.must_bind_totp %}
+  <div class="alert warn" style="margin-top:14px;">{{ t('Your TOTP has been reset by the administrator. You must rebind it at next login.') }}</div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Login') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      {% if site_logo %}<img src="/uploads/{{ site_logo }}" alt="logo">{% endif %}
+      <div class="name">{{ site_name }}</div>
+      <div class="tip">{{ t('Customer balance & consumption portal') }}</div>
+    </div>
+    <div class="card">
+      <form method="post" action="/login">
+        <div class="field">
+          <label for="email">{{ t('Email / Username') }}</label>
+          <input type="text" id="email" name="email" autocomplete="username" required autofocus>
+        </div>
+        <div class="field">
+          <label for="password">{{ t('Password') }}</label>
+          <input type="password" id="password" name="password" autocomplete="current-password" required>
+        </div>
+        <div class="btn-row">
+          <button class="btn" type="submit">{{ t('Log In') }}</button>
+        </div>
+      </form>
+      {% if registration_enabled %}
+      <div class="divider"></div>
+      <div class="auth-foot">
+        {{ t('No account yet?') }}<a href="/register">{{ t('Self-service registration') }}</a>
+        <div class="small muted">{{ t('Only emails under whitelisted customer domains can self-register') }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

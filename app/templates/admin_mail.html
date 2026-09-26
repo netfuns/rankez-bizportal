@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Outbox') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>{{ t('Outbox') }}</h1>
+  <div class="sub">{{ t('Last 200 system emails') }}</div>
+</div>
+
+{% if not smtp_ready %}
+<div class="alert warn">{{ t('SMTP not configured; none of the emails below were actually sent. Expand to view the confirmation link and send it manually, or use "Mark Confirmed" in user management.') }}</div>
+{% endif %}
+
+<div class="card">
+  {% for m in rows %}
+  <div style="border-bottom:1px solid var(--border);padding-bottom:14px;margin-bottom:14px;">
+    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <strong>{{ m.subject }}</strong>
+        <div class="small muted">{{ t('Recipient') }}: {{ m.to_addr }} · {{ m.created_at|dt }}</div>
+      </div>
+      <div>
+        {% if m.status == 'sent' %}<span class="badge ok">{{ t('Sent') }}</span>
+        {% else %}<span class="badge err">{{ t('Not sent') }}</span>{% endif %}
+      </div>
+    </div>
+    {% if m.error %}<div class="small" style="color:var(--err);margin-top:4px;">{{ m.error }}</div>{% endif %}
+    <pre class="mail-body">{{ m.body }}</pre>
+    <div class="btn-row">
+      <form method="post" action="/admin/mail/{{ m.id }}/resend" style="display:inline">
+        <button class="btn ghost sm" type="submit">{{ t('Resend') }}</button>
+      </form>
+      <form method="post" action="/admin/mail/{{ m.id }}/delete" style="display:inline">
+        <button class="btn ghost sm" type="submit">{{ t('Delete') }}</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty">{{ t('No emails') }}</div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ status_code }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="card">
+  <h1>{{ status_code }}</h1>
+  <p class="muted">{{ t(detail) if detail else '' }}</p>
+  <a class="btn" href="/">{{ t('Back to Home') }}</a>
+</div>
+{% endblock %}

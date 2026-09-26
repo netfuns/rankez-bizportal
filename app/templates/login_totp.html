@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{{ t('Two-factor authentication') }} · {{ browser_title }}{% endblock %}
+{% block content %}
+<div class="auth-shell">
+  <div class="auth-card">
+    <div class="auth-brand">
+      {% if site_logo %}<img src="/uploads/{{ site_logo }}" alt="logo">{% endif %}
+      <div class="name">{{ t('Two-factor authentication') }}</div>
+      <div class="tip">{{ email }}</div>
+    </div>
+    <div class="card">
+      {% if binding %}
+      <div class="alert info">{{ t('First login requires binding a TOTP authenticator. Please scan the QR code below with an authenticator app (Google Authenticator / WeChat / 1Password, etc.).') }}</div>
+      <div class="totp-box">
+        <img src="{{ qr }}" alt="TOTP QR">
+        <div class="small muted">{{ t('If the QR code does not display, you can manually enter the secret below') }}</div>
+        <div class="secret" id="secret-text">{{ secret }}</div>
+        <button class="btn ghost sm copy-btn" type="button" data-copy="{{ secret }}">{{ t('Copy secret') }}</button>
+      </div>
+      <div class="divider"></div>
+      {% endif %}
+      <form method="post" action="/login/totp">
+        {% if binding %}<input type="hidden" name="secret" value="{{ secret }}">{% endif %}
+        <div class="field">
+          <label for="code">{{ t('One-time code (6 digits)') }}</label>
+          <input type="text" id="code" name="code" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" required autofocus>
+        </div>
+        <div class="btn-row">
+          <button class="btn" type="submit">{{ t('Verify and Log In') }}</button>
+          <a class="btn ghost" href="/logout">{{ t('Cancel') }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
