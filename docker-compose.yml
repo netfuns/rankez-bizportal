@@ -1,0 +1,27 @@
+services:
+  bizportal:
+    image: ghcr.io/netfuns/rankez-bizportal:latest
+    # 也可以在源码目录直接构建：
+    # build: .
+    container_name: bizportal
+    restart: always
+    ports:
+      - "8888:8888"
+    volumes:
+      # 数据持久化：SQLite 数据库与上传文件都落在 compose 文件同级的 ./data 目录，
+      # 备份只需打包该目录
+      - ./data:/data
+    environment:
+      # 会话签名密钥，生产环境请改成随机长字符串
+      BIZPORTAL_SECRET_KEY: change-me-to-a-long-random-secret
+      TZ: Asia/Shanghai
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8888/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+# 数据备份：
+#   tar czf bizportal-data-$(date +%F).tgz data/
+# 数据恢复：停容器(docker compose down) -> 解包覆盖 data/ -> 再启动(docker compose up -d)

@@ -49,7 +49,7 @@
       <thead>
         <tr>
           <th style="width:32px;"></th>
-          <th>{{ t('Username (Email)') }}</th><th>{{ t('Full name') }}</th><th>{{ t('Phone') }}</th><th>{{ t('Customer') }}</th>
+          <th>{{ t('Username (Email)') }}</th><th>{{ t('Full name') }}</th><th>{{ t('Customer') }}</th>
           <th>{{ t('Role') }}</th><th>{{ t('Status') }}</th><th>TOTP</th><th>{{ t('Created') }}</th><th>{{ t('Actions') }}</th>
         </tr>
       </thead>
@@ -59,9 +59,8 @@
           <td>{% if u.role != 'admin' %}<input type="checkbox" class="row-check" value="{{ u.id }}">{% endif %}</td>
           <td>{{ u.email }}</td>
           <td>{{ u.full_name or '-' }}</td>
-          <td>{{ u.phone or '-' }}</td>
           <td>{{ u.customer.assumed_name if u.customer else '-' }}</td>
-          <td>{% if u.role == 'admin' %}<span class="badge brand">{{ t('Admin') }}</span>{% else %}<span class="badge gray">{{ t('Customer User') }}</span>{% endif %}</td>
+          <td>{% if u.role == 'admin' %}<span class="badge brand">{{ t('Admin') }}</span>{% else %}<span class="badge gray">{{ t('Customer') }}</span>{% endif %}</td>
           <td>
             {% if u.status == 'active' %}<span class="badge ok">{{ t('Active') }}</span>
             {% elif u.status == 'pending' %}<span class="badge warn">{{ t('Pending confirmation') }}</span>

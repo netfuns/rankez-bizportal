@@ -37,7 +37,7 @@
       <div class="field">
         <label for="role">{{ t('Role') }}</label>
         <select id="role" name="role">
-          <option value="user" {% if user.role == 'user' %}selected{% endif %}>{{ t('Customer User') }}</option>
+          <option value="user" {% if user.role == 'user' %}selected{% endif %}>{{ t('Customer') }}</option>
           <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>{{ t('Admin') }}</option>
         </select>
       </div>
